@@ -55,6 +55,15 @@ is cached. Direct dynamic tool names use double underscores: `deform__twist_mesh
 
 ## Build a model
 
+When you build or edit polygon geometry, reuse the same vertex index in every face
+that meets at that point on the same surface. Create one vertex per shared position.
+Split render vertices only where attributes such as UVs or normals require a seam.
+
+Remove or connect orphan faces before delivery. An orphan face has no shared edge
+with its intended surface. Use `mesh.select_components` after topology edits to
+check for unintended disconnected faces or patches. Keep intentionally separate
+parts and surfaces that consist of a single face.
+
 1. Invoke `scene.create`; keep its `result.id` as `scene_id`.
 2. Create a primitive with `mesh.create_cube`, `mesh.create_cylinder`, etc. Keep `object_id`.
    Cylinders intended for deformation need vertical resolution (`height_segments`).
