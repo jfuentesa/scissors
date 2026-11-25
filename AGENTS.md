@@ -73,7 +73,8 @@ to HTTP when it owns a workspace; do not start stdio against it. See [architectu
     Update the distributable skill when public workflows change.
 11. Justify new dependencies. Built-in geometry backends are required dependencies;
     new optional capabilities must be justified separately.
-12. Run lint, types and tests before finishing; report actual results.
+12. Run lint, types and the tests that cover the change before finishing; report actual
+    results. Skip the full suite when no executable behavior changed.
 
 ## Documentation
 
@@ -131,6 +132,12 @@ Inspect error envelopes and `plugins list` load errors; reproduce failures in te
 workspaces. Never delete a running workspace's lock. Transport changes need both real
 stdio and HTTP integration tests. Export changes need artifact reopening.
 
+Match checks to the change. A documentation or skill-only edit needs the skill test
+(`uv run pytest -q tests/test_skill.py`), Ruff and mypy. Run the full suite when code,
+contracts, plugins, transports or exports change, or when no focused test covers the
+risk. State which checks ran and which did not. Do not repeat a check that already
+passed on the same unmodified files.
+
 Plugin workflow: prepare manifest/code/tests under workspace staging; validate without
 execution; install, which enables the package; run tests; describe/invoke; verify dynamic
 discovery and restart persistence. See docs/plugins.md for complete commands.
@@ -146,7 +153,8 @@ Report the results of these checks and any remaining limitations.
 - [ ] Shared registry behavior and accurate schemas/permissions/errors.
 - [ ] Failure restores state; resource/path checks and reserved plugin paths remain enforced.
 - [ ] Relevant tests and examples run, including reopening generated artifacts.
-- [ ] Ruff check, format --check, mypy src and pytest pass.
+- [ ] Ruff check, format --check and mypy src pass, plus the tests that cover the change;
+      a documentation or skill-only edit skips the full pytest suite.
 - [ ] Built-in geometry backends work in the default installation without feature selectors.
 - [ ] Docs and distributable skill updated for changed public workflows.
 - [ ] Actual outcomes/limitations documented, with no simulated features or placeholders.

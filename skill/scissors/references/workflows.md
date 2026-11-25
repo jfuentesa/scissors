@@ -248,6 +248,12 @@ Read the evidence in this order:
 | PBR map set | `material.get` | Every declared map resolves to an existing workspace PNG |
 | Visual quality | Six previews with `sample_textures=true` | No visible seam, mirror, blur or wrong scale |
 
+Plan the atlas before packing. Keep a few complete charts that follow the object's parts;
+do not fragment a surface into many small islands. Each chart costs padding and filtering,
+so a fragmented layout wastes texels that a coarse layout keeps. Force cut lines with
+`uv.unwrap` face groups, choose the packing area with the `uv.generate` atlas region, then
+check `chart_count` or `island_count` before accepting the result.
+
 Add one close-up per object and one section view for interiors. Reopen the exported file:
 a GLB must embed its base-colour texture, and static FBX/DAE need their PNG sidecars.
 When the job gives a different density, anisotropy or resolution limit, use the job value

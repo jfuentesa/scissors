@@ -24,10 +24,12 @@ or install dependencies automatically to complete a modeling request.
    but clears UV. It uses a uniform grid and requires closed oriented input. It is not
    an automatic repair tool for arbitrary holes or intersecting surfaces.
 5. Use `uv.unwrap`. Optional face_groups must partition all current face indices.
-   Group boundaries force cuts; xatlas can add more cuts. Density weights allocate
-   relative texel area. Weight 4 gives roughly twice the linear density of weight 1.
-   Inspect returned distortion. Anisotropy 1 means equal directional stretch.
-   Set max_anisotropy to reject excessive stretch. Face order may change after unwrap.
+   Group boundaries force cuts; xatlas can add more cuts. Group complete surface regions,
+   not many small patches, because every extra chart costs padding and filtering.
+   Density weights allocate relative texel area. Weight 4 gives roughly twice the linear
+   density of weight 1. Inspect returned distortion. Anisotropy 1 means equal directional
+   stretch. Set max_anisotropy to reject excessive stretch. Face order may change after
+   unwrap.
 6. Assign a dedicated material and load a workspace image with `texture.load`.
    `texture.project` requires object_id, texture_id, center, radius and size [width,height].
    Perpendicular u_axis/v_axis orient the image. It blends source alpha and opacity

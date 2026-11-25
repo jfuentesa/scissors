@@ -79,6 +79,8 @@ parts and surfaces that consist of a single face.
 4. Create a material with `material.create`, generate `texture.generate_checker`, then
    `uv.generate` and `texture.assign`. Assign the material with `material.assign`.
    Materials belong to scenes; texture IDs refer to workspace-managed PNG files.
+   The checker is a placeholder: read "Texture images and coherent UV atlases" for real
+   artwork and for the atlas layout rule.
 5. Inspect using `mesh.inspect` and `uv.inspect`; call `mesh.validate` after complex edits.
    `require_closed=true` is appropriate for printable solids, but open planes are valid otherwise.
 6. Review the model and its textures before delivery. This review is part of the build,
@@ -419,6 +421,27 @@ its images with aligned uncompressed members. It is not USDC; Apple compatibilit
 unverified. USD keeps vertex-color primvars, but textured shaders do not multiply them.
 Open the result in the intended consumer before delivery. Structure tests do not certify
 every importer or visual material result.
+
+## Texture images and coherent UV atlases
+
+Scissors generates flat images and edits them. It does not create artwork. Before you
+use `texture.generate_checker`, `texture.draw_text` or flat `texture.compose` shapes as
+finished art, check whether your own tools or MCP servers can generate textures or
+illustrations. When one can, use it to produce base-colour, pattern, label or decal
+images. Save the resulting PNG inside the workspace and register it with `texture.load`,
+which stores a managed PNG. Then assign the map to a material or project it onto a
+surface with `texture.project`. Ask the user when no image tool exists or when it cannot
+write to the workspace. A checker or gradient is final art only when the job asks for
+that pattern.
+
+Keep each UV atlas coherent. Do not split a surface into many small charts. Every chart
+needs padding and mip filtering, and a fragment-heavy atlas loses texels and makes later
+edits harder. Plan a few complete pieces that match real parts of the object, such as a
+panel, a side, a lid or a face. Cut on existing seams or hard creases, and split only
+when a single chart would stretch or overlap. Force chart boundaries with `uv.unwrap`
+face groups and place the atlas with the `uv.generate` atlas region. Read `chart_count`
+or `island_count` and inspect the atlas before accepting it. Reject an atlas with many
+small fragments in the same way as one with overlap or a degenerate UV triangle.
 
 ## Extend with a plugin
 
