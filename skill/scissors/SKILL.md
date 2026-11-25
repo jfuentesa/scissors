@@ -94,8 +94,7 @@ parts and surfaces that consist of a single face.
    With access to the server's files, verify the artifact exists and reopen the GLB.
    Otherwise report the returned server path, size and diagnostics, and state that
    the file was not independently reopened. A server path is not a download URL.
-   GLB and glTF export Y-up, the glTF convention, so Y-up engines load the model
-   upright; OBJ and STL keep scene Z-up coordinates.
+   GLB, glTF and static FBX export Y-up. OBJ and STL keep scene Z-up coordinates.
 
 Use [workflows](references/workflows.md) for runnable examples and batching.
 For organic surfaces, local edits, sculpting, controlled UV and image projection,
@@ -401,7 +400,8 @@ spatial contact does not prove a mechanical joint or physical support.
 addition to the earlier formats. Match output extension and format. Keep all returned PNG
 sidecars with static FBX/DAE. Retained rig FBX embeds its source images.
 Static writers use Phong approximations and preserve unsupported PBR channels
-as extras. All three retain Z-up and declare scene units. USDZ embeds a USDA root layer and
+as extras. Static FBX exports Y-up. DAE and USDZ retain Z-up. All three declare scene units.
+USDZ embeds a USDA root layer and
 its images with aligned uncompressed members. It is not USDC; Apple compatibility is
 unverified. USD keeps vertex-color primvars, but textured shaders do not multiply them.
 Open the result in the intended consumer before delivery. Structure tests do not certify

@@ -96,6 +96,7 @@ consolidation, separate part files and VTK-generated LODs with actual face repor
 STL includes every placed instance. PLY is binary geometry with normals/colors and UV
 properties; it omits texture images and PBR. FBX, DAE and USDZ include hierarchy,
 materials and texture assets, with format-specific limits described in [the API](api.md).
+Static FBX exports Y-up. DAE and USDZ export Z-up.
 
 Timeouts apply to plugin workers and costly geometry backends; bounded native NumPy
 operations run in the main process. POSIX plugin workers have memory/file limits; Windows

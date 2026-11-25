@@ -34,6 +34,7 @@ def register_delivery(registry: OperationRegistry, engine: Engine) -> None:
     registry.add_function(
         "scene.split_export",
         split_export,
-        "Export visible meshes by object, top-level subtree or material with separate sidecars.",
+        "Export visible meshes by object, top-level subtree or material with separate sidecars. "
+        "Static FBX exports Y-up.",
         permissions=["filesystem.write"],
     )

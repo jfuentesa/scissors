@@ -97,7 +97,7 @@ the imported material. Skins, blend shapes and animation are not evaluated. Bake
 layered/procedural textures, transformed texture coordinates and maps on additional UV
 sets; triangulate polygon holes. Separate opacity maps are omitted with a warning.
 Missing supported external images fail import, and all image reads remain inside the
-workspace. Static FBX exports use PNG sidecars.
+workspace. Static FBX exports use Y-up coordinates and PNG sidecars.
 
 Binary FBX defaults to `fbx_mode="preserve"` when rig, blend-shape or animation data exists.
 The result includes `rig`; `scene.inspect` lists retained `rigs`. Use a new/empty scene,

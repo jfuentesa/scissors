@@ -352,6 +352,7 @@ def test_instances_with_distinct_materials_keep_their_bindings(app):
 def test_builtin_fbx_export_import_retains_pbr_and_geometry(app):
     scene = app.scenes.create()
     cube = app.meshes.create_cube(scene_id=scene.id)
+    app.meshes.translate(object_id=cube.id, x=1, y=2, z=3)
     app.call("uv.generate", object_id=cube.id, method="box")
     material = app.materials.create(scene_id=scene.id, metallic=0.25, roughness=0.6)
     app.materials.assign(object_id=cube.id, material_id=material.id)

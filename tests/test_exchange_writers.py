@@ -126,13 +126,21 @@ def test_fbx_binary_offsets_geometry_layers_and_world_hierarchy(app, shear):
     cube = app.meshes.create_cube(scene_id=scene.id, name="Panel")
     app.call("uv.generate", object_id=cube.id, method="box")
     group = app.scenes.group(scene_id=scene.id, object_ids=[cube.id], name="Assembly")
-    app.meshes.translate(object_id=group.id, x=2)
+    app.meshes.rotate(object_id=group.id, axis="x", angle_degrees=28)
+    app.meshes.translate(object_id=group.id, x=2, y=3, z=4)
     matrix = np.eye(4)
     if shear:
         matrix[0, 1] = 0.3
         matrix[0, 3] = 3
     result = app.export.fbx(scene.id, export_transform=matrix.tolist())
     document = read_fbx(result.path)
+    axes = {
+        item["properties"][0]: item["properties"][4]
+        for item in child(child(document, "GlobalSettings")["children"], "Properties70")["children"]
+    }
+    assert (axes["UpAxis"], axes["UpAxisSign"]) == (1, 1)
+    assert (axes["FrontAxis"], axes["FrontAxisSign"]) == (2, 1)
+    assert (axes["CoordAxis"], axes["CoordAxisSign"]) == (0, 1)
     objects = child(document, "Objects")["children"]
     models = {item["properties"][0]: item for item in objects if item["name"] == "Model"}
     geometry = child(objects, "Geometry")
@@ -165,10 +173,18 @@ def test_fbx_binary_offsets_geometry_layers_and_world_hierarchy(app, shear):
     transformed = trimesh.transformations.transform_points(
         vertices, world(parents[geometry["properties"][0]])
     )
-    expected = trimesh.transformations.transform_points(
-        app.engine.object(cube.id)[1].vertices, matrix
+    source = app.engine.object(cube.id)[1]
+    expected = trimesh.transformations.transform_points(source.vertices, matrix)
+    np.testing.assert_allclose(transformed, expected[:, [0, 2, 1]] * [1, 1, -1], atol=1e-10)
+    normal_layer = child(geometry["children"], "LayerElementNormal")
+    normals = child(normal_layer["children"], "Normals")["properties"][0].reshape(-1, 3)
+    transformed_normals = normals @ np.linalg.inv(world(parents[geometry["properties"][0]])[:3, :3])
+    transformed_normals /= np.linalg.norm(transformed_normals, axis=1, keepdims=True)
+    expected_normals = np.asarray(source.normals) @ np.linalg.inv(matrix[:3, :3])
+    expected_normals /= np.linalg.norm(expected_normals, axis=1, keepdims=True)
+    np.testing.assert_allclose(
+        transformed_normals, expected_normals[:, [0, 2, 1]] * [1, 1, -1], atol=1e-10
     )
-    np.testing.assert_allclose(transformed, expected, atol=1e-10)
 
 
 @pytest.mark.parametrize("format", ["fbx", "dae", "usdz"])

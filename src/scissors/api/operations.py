@@ -799,6 +799,7 @@ def register_native(registry: OperationRegistry, engine: Engine) -> None:
         "scene.export",
         scene_export,
         "Export GLB/glTF/OBJ/STL/PLY/DAE/USDZ/binary FBX with selection, root transform and LODs. "
+        "Static FBX exports Y-up. "
         "Retained FBX rigs require complete FBX export, unchanged placement/materials, "
         "and no split, root rename, LODs or export transform.",
         True,

@@ -85,9 +85,8 @@ All built-in geometry operations are included without feature selectors.
 Materials must share their object's scene. PBR RGBA uses 0..1; checker RGBA uses integer
 0..255. Texture slots: base_color, normal, metallic_roughness (glTF G roughness/B metallic).
 Textured exports require UV. GLB is self-contained; glTF/OBJ return sidecar `files`.
-glTF and GLB follow the glTF Y-up convention: scene +Z becomes export +Y, and exported nodes
-use readable, unique object names. OBJ and STL keep scene Z-up coordinates, so prefer GLB in
-Y-up engines or convert the other formats yourself.
+glTF, GLB and static FBX export Y-up. Scene +Z becomes export +Y, and exported nodes
+use readable, unique object names. OBJ and STL keep scene Z-up coordinates.
 scene.load preserves IDs and replaces the matching scene; conflicting IDs/references fail.
 Scene snapshots refer to textures in their workspace. Deleted scenes leave managed textures.
 
@@ -884,7 +883,8 @@ Manifold 3.5.4 or newer is required for the Mesh64 property and run-provenance i
 excluded subtrees and hidden objects are omitted. Ancestors remain as empty transform frames
 when their geometry is outside the selection. This preserves world placement and hierarchy.
 export_transform is an invertible affine 4x4 matrix in scene coordinates. It applies once
-at the export root before glTF Y-up conversion. root_name selects the sanitized root name.
+at the export root before the Y-up conversion for glTF, GLB and static FBX.
+root_name selects the sanitized root name.
 Neither option changes stored geometry. A root named world is safely disambiguated.
 STL/OBJ/PLY bake every mesh instance, including its graph placement and inverse normal matrix.
 
@@ -1257,11 +1257,12 @@ OpenUSD or a new optional feature installation.
 | DAE | COLLADA 1.4.1 XML; geometry instances, hierarchy, affine matrices, normals, UV and RGBA | Phong approximation; base/emission textures; other PBR images retained through SCISSORS extras |
 | USDZ | USDA root layer plus PNG images; uncompressed ZIP with each payload aligned to 64 bytes | USD Preview Surface with base/normal/metallic/roughness/emissive/occlusion maps, alpha and double-sided flags |
 
-Static exports in all three formats retain Z-up coordinates and declare meters per scene unit.
-Retained FBX documents instead keep their original axes and units (see [rig retention](fbx-rig.md)). FBX expresses this in
-centimeters per unit as required by its metadata. Importers choose whether to honor those
-declarations. Vertices already contain engine transforms; the shared export graph is used
-once, rather than applying the diagnostic transform twice. FBX uses RSrs matrix inheritance.
+Static FBX exports use right-handed Y-up coordinates. Scene `(x, y, z)` becomes
+FBX `(x, z, -y)`. The writer converts mesh vertices, normals and local node transforms
+to that basis. DAE and USDZ retain scene Z-up coordinates. Static FBX declares centimeters
+per scene unit in its metadata. Retained FBX documents keep their original axes and units.
+See [rig retention](fbx-rig.md). Importers choose whether to honor the declarations.
+FBX uses RSrs matrix inheritance and applies the shared export graph once.
 A local shear is factored into two TRS nodes; the extra node has an `_Affine` name. DAE and
 USD store full local matrices. USD uses row-vector matrices, so the writer transposes the
 internal column-vector matrix in its layer text.

@@ -14,6 +14,8 @@ from scissors.core.exchange import ExchangeContext, mesh_colors, mesh_uv, unit_s
 
 VERSION = 7400
 NULL = bytes(13)
+# Scissors +X, +Y, +Z map to FBX +X, -Z, +Y.
+Z_UP_TO_Y_UP = np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, -1, 0, 0], [0, 0, 0, 1]])
 
 
 @dataclass
@@ -136,6 +138,7 @@ def export_fbx(
 ) -> tuple[bytes, dict[str, bytes], list[str]]:
     meters = unit_scale(units)
     context = ExchangeContext(scene, settings, prefix)
+    basis = Z_UP_TO_Y_UP[:3, :3]
     objects: list[Node] = []
     connections: list[Node] = []
     next_id = 1000
@@ -252,7 +255,7 @@ def export_fbx(
         faces[:, 2] = -faces[:, 2] - 1
         children = [
             node("GeometryVersion", np.int32(124)),
-            node("Vertices", np.asarray(mesh.vertices, dtype=float)),
+            node("Vertices", np.asarray(mesh.vertices, dtype=float) @ basis.T),
             node("PolygonVertexIndex", faces),
         ]
         layers: list[Node] = []
@@ -286,7 +289,7 @@ def export_fbx(
                 )
             )
 
-        layer("Normal", [node("Normals", np.asarray(mesh.vertex_normals, dtype=float))])
+        layer("Normal", [node("Normals", np.asarray(mesh.vertex_normals, dtype=float) @ basis.T)])
         uv, colors = mesh_uv(mesh), mesh_colors(mesh)
         if uv is not None:
             layer("UV", [node("UV", uv)])
@@ -311,7 +314,9 @@ def export_fbx(
         parent = pending.pop(0)
         for name, data in context.children.get(parent, []):
             current_parent = model_ids[parent]
-            parts = affine_parts(np.asarray(data["matrix"], dtype=float))
+            # Express each local frame in the same basis as its geometry and parent.
+            local = np.asarray(data["matrix"], dtype=float)
+            parts = affine_parts(Z_UP_TO_Y_UP @ local @ Z_UP_TO_Y_UP.T)
             key = data.get("geometry")
             for index, (translation, angles, scale) in enumerate(parts):
                 model_id = uid()
@@ -362,10 +367,10 @@ def export_fbx(
     for item in objects:
         type_counts[item.name] = type_counts.get(item.name, 0) + 1
     globals = [
-        prop("UpAxis", "int", np.int32(2)),
+        prop("UpAxis", "int", np.int32(1)),
         prop("UpAxisSign", "int", np.int32(1)),
-        prop("FrontAxis", "int", np.int32(1)),
-        prop("FrontAxisSign", "int", np.int32(-1)),
+        prop("FrontAxis", "int", np.int32(2)),
+        prop("FrontAxisSign", "int", np.int32(1)),
         prop("CoordAxis", "int", np.int32(0)),
         prop("CoordAxisSign", "int", np.int32(1)),
         prop("UnitScaleFactor", "double", meters * 100),
@@ -426,7 +431,7 @@ def export_fbx(
         file_data,
         context.assets,
         [
-            "FBX 7.4 binary retains hierarchy, instances, UV, normals and vertex colors; Z-up.",
+            "FBX 7.4 binary exports Y-up with hierarchy, instances, UV, normals and vertex colors.",
             "Full affine placement uses RSrs inheritance and helper nodes for local shear.",
             "Phong approximates PBR. Metallic/roughness and ORM/occlusion use custom properties.",
             "Keep PNG sidecars with FBX. Vertex-color/normal-map rendering depends on importer.",

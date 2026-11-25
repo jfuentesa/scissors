@@ -93,8 +93,8 @@ to HTTP when it owns a workspace; do not start stdio against it. See [architectu
 Public: Scissors, Settings, app.call, app.transaction, namespace keyword methods, export
 methods, Operation,
 OperationRegistry, ScissorsError, PluginManifest API 1.0 and PluginContext.
-Coordinates are right-handed Z-up; glTF and GLB export convert to the glTF Y-up convention
-and name nodes after objects. Transforms are baked into vertices; the cumulative
+Scene coordinates are right-handed Z-up. glTF, GLB and static FBX export Y-up and
+name nodes after objects. Transforms are baked into vertices; the cumulative
 matrix is recorded for diagnostics and must not be applied twice. IDs are independent of
 object order. Render vertices can split at seams; topology diagnostics weld exact positions.
 
