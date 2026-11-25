@@ -81,19 +81,30 @@ parts and surfaces that consist of a single face.
    Materials belong to scenes; texture IDs refer to workspace-managed PNG files.
 5. Inspect using `mesh.inspect` and `uv.inspect`; call `mesh.validate` after complex edits.
    `require_closed=true` is appropriate for printable solids, but open planes are valid otherwise.
-6. Generate `scene.preview`, export using `scene.export`, and save using `scene.save`.
-   Keep outputs inside the workspace, for example `exports/model.glb`.
-   Review the model from several angles with the `scene.preview` camera arguments
-   (`azimuth_degrees`, `elevation_degrees`, `zoom`, `offset_x`, `offset_y`) and, for
-   interiors, the section view (`clip_axis`, `clip_position`, `clip_keep`).
-   Before export, check the geometry report with `mesh.validate` and review a section
-   view for wall thickness. Depth and normal passes require VTK; diagnostic highlights
-   use the color pass.
-   Follow the
-   [review recipe](references/workflows.md).
-   With access to the server's files, verify the artifact exists and reopen the GLB.
-   Otherwise report the returned server path, size and diagnostics, and state that
-   the file was not independently reopened. A server path is not a download URL.
+6. Review the model and its textures before delivery. This review is part of the build,
+   not an optional extra. Render `scene.preview` with `sample_textures=true` from the four
+   side azimuths (0, 90, 180, 270), the top and the bottom, plus one close-up per
+   object. For interiors, add the section view (`clip_axis`, `clip_position`,
+   `clip_keep`). Camera arguments are `azimuth_degrees`, `elevation_degrees`, `zoom`,
+   `offset_x` and `offset_y`. The back and underside must appear in the images you
+   inspect; one hero view is not a review.
+   Every textured object passes a mandatory texture gate. Run
+   `uv.inspect(texture_resolution=[width,height])` for each textured mesh and record
+   `covered_area_fraction`, `degenerate_uv_triangles`, `min_pixels_per_meter`,
+   `max_pixels_per_meter` and `max_anisotropy`. Reject the object when coverage is
+   incomplete, a degenerate UV triangle remains, charts overlap outside repeat mode,
+   density differs from its target by more than 20 percent, or anisotropy exceeds 2.0
+   unless the job accepts more. Check every image for seams, stretched texels, mirrored
+   text, missing maps and wrong scale. Do not export until the views pass.
+   Depth and normal passes require VTK; diagnostic highlights use the color pass.
+   Follow the [review recipe](references/workflows.md).
+7. Export using `scene.export` and save using `scene.save`. Keep outputs inside the
+   workspace, for example `exports/model.glb`. Before export, check the geometry report
+   with `mesh.validate` and review a section view for wall thickness.
+   With access to the server's files, verify the artifact exists, reopen the GLB and
+   confirm it carries its base-colour texture. Otherwise report the returned server
+   path, size and diagnostics, and state that the file was not independently reopened.
+   A server path is not a download URL.
    GLB, glTF and static FBX export Y-up. OBJ and STL keep scene Z-up coordinates.
 
 Use [workflows](references/workflows.md) for runnable examples and batching.
@@ -341,7 +352,9 @@ capacity failure leaves every selected mesh unchanged. It never lowers density t
 Packing does not rotate charts and is not optimal. Repeat mode permits overlapping
 UV outside [0,1], requires the full image and padding=0, and needs repeat sampling.
 Inspect the returned minimum/maximum face density and anisotropy, not just the average.
-Density uses meters and pixel area; it does not measure source image detail.
+Density uses meters and pixel area; it does not measure source image detail. These
+numbers do not accept a texture on their own: the rendered texture gate in step 6
+of the build must pass as well.
 Material-batched exports keep validated parts independent at exact contacts. Use a
 Boolean union when a single solid is required. FBX/DAE image tinting uses bounded
 blocks and preserves texture resolution when the complete export fits memory.

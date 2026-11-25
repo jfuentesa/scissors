@@ -40,9 +40,12 @@ or install dependencies automatically to complete a modeling request.
    Camera parameters elevation_degrees, azimuth_degrees, zoom, offset_x and offset_y
    align the solid-color orthographic preview. Offsets are fractions of panel size.
    Elevation tilts X before azimuth rotates Z. This is manual alignment, not camera
-   calibration or automatic anatomy fitting. Previews do not sample textures.
+   calibration or automatic anatomy fitting. The comparison panels use a solid-colour
+   preview and do not sample the projected texture; the delivery review in the build
+   steps does.
 
 Geometry edits can enter atomic batches. Texture projection and comparison write files
-and cannot. After modeling, validate closure if needed, inspect the silhouette, export
-and reopen the artifact when file access is available. Report resolution and renderer
-limits instead of claiming preservation of every small feature.
+and cannot. After modeling, validate closure if needed, run the texture review gate with
+`sample_textures=true` views from every side, then export and reopen the artifact when
+file access is available. Report resolution and renderer limits instead of claiming
+preservation of every small feature.

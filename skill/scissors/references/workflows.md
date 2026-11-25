@@ -126,7 +126,7 @@ indices at coincident contacts. It is a render optimization, not a solid union.
 FBX and DAE preserve image dimensions during bounded tint processing. Keep all returned
 PNG sidecars, and reopen the result in the intended consumer before delivery.
 
-Two checks catch most problems: a set of rendered views and the geometry report.
+Rendered views, the geometry report and the texture gate below catch most problems.
 `scene.preview` draws with VTK offscreen or the Pillow painter and reports the backend.
 `mesh.validate` reports closure, degenerate faces, winding and normal errors.
 
@@ -191,12 +191,68 @@ Read the results like this:
 - **Geometry report:** `errors` lists hard failures such as `NOT_CLOSED`,
   `DEGENERATE_FACES` or `INDEX_OUT_OF_RANGE`. `warnings` lists open meshes and incorrect
   normals.
-- **Depth and normal render passes no longer exist.** They needed the removed CPU
-  rasterizer. Use sections, `mesh.inspect`, `mesh.validate` and `mesh.measure` instead.
+- **Depth and normal passes:** `render_pass="depth"` writes camera distance as a 16-bit
+  PNG with an NPZ sidecar, and `render_pass="normal"` writes world normals in RGB. Both
+  require VTK and reject diagnostic highlights.
 
 Previews are review tools: nothing about the scene changes, and `scene.preview` does not
 rewrite `state.json`.
 
+## Texture review gate
+
+Every textured model passes this gate before export. One rendered view does not satisfy it.
+The full angle list is mandatory: a front view alone hides seams on the back, stretching
+under the base and mirrored text on the far side.
+
+```python
+angles = [
+    ("front", 0, 0), ("right", 90, 0), ("back", 180, 0), ("left", 270, 0),
+    ("top", 0, 89), ("bottom", 0, -89),
+]
+target = 1024  # pixels per meter agreed for this job
+camera = {
+    "scene_id": scene["id"],
+    "width": 768,
+    "height": 768,
+    "projection": "perspective",
+    "sample_textures": True,
+    "zoom": 0.95,
+}
+for name, azimuth, elevation in angles:
+    app.call(
+        "scene.preview",
+        output=f"previews/texture_{name}.png",
+        azimuth_degrees=azimuth,
+        elevation_degrees=elevation,
+        **camera,
+    )
+
+uv = app.call("uv.inspect", object_id=part["id"], texture_resolution=[2048, 2048])
+density = uv["density"]
+assert density["covered_area_fraction"] > 0.999
+assert density["degenerate_uv_triangles"] == 0
+assert density["max_anisotropy"] <= 2.0
+assert 0.8 * target <= density["min_pixels_per_meter"]
+assert density["max_pixels_per_meter"] <= 1.2 * target
+```
+
+Read the evidence in this order:
+
+| Criterion | Evidence | Pass condition |
+| --- | --- | --- |
+| Material and base colour | `material.list`, object material | Every textured object has a material with a base-colour map |
+| UV coverage | `uv.inspect` | `covered_area_fraction` is 1 and no degenerate UV triangle remains |
+| Chart overlap | `uv.generate` atlas mode | Packing succeeds; a self-overlapping island fails with `UV_OVERLAP` |
+| Texel density | `uv.inspect(texture_resolution=...)` | `min`/`max_pixels_per_meter` within 20 percent of the target |
+| Stretching | `uv.inspect` | `max_anisotropy` at or below 2.0 unless the job accepts more |
+| PBR map set | `material.get` | Every declared map resolves to an existing workspace PNG |
+| Visual quality | Six previews with `sample_textures=true` | No visible seam, mirror, blur or wrong scale |
+
+Add one close-up per object and one section view for interiors. Reopen the exported file:
+a GLB must embed its base-colour texture, and static FBX/DAE need their PNG sidecars.
+When the job gives a different density, anisotropy or resolution limit, use the job value
+and record it with the result. Keep the six images and the measured density values with
+the delivery so the reviewer can check the same evidence.
 
 ## Hollow body with an underside opening
 
