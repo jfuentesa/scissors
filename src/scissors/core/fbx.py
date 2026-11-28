@@ -162,6 +162,7 @@ def export_fbx(
         material_ids.append(material_id)
         has_base, has_emissive = "base" in material.images, "emissive" in material.images
         specular = (1 - material.metallic) * 0.04 + material.metallic * material.color[:3]
+        shininess = float(min(128, max(0, 2 / max(material.roughness, 0.01) ** 4 - 2)))
         properties = [
             prop("DiffuseColor", "Color", *(np.ones(3) if has_base else material.color[:3])),
             prop("DiffuseFactor", "Number", 1.0),
@@ -169,11 +170,10 @@ def export_fbx(
             prop("EmissiveFactor", "Number", 1.0),
             prop("SpecularColor", "Color", *specular),
             prop("SpecularFactor", "Number", 1.0),
-            prop(
-                "Shininess",
-                "Number",
-                float(min(128, max(0, 2 / max(material.roughness, 0.01) ** 4 - 2))),
-            ),
+            # FBX SDK writes both names: modern readers use ShininessExponent, older
+            # readers such as Blender use Shininess. Keep both values identical.
+            prop("ShininessExponent", "Number", shininess),
+            prop("Shininess", "Number", shininess),
             prop("TransparencyFactor", "Number", float(1 - material.color[3])),
             prop("ScissorsMetallic", "Number", material.metallic, flags="AU"),
             prop("ScissorsRoughness", "Number", material.roughness, flags="AU"),
@@ -434,6 +434,7 @@ def export_fbx(
             "FBX 7.4 binary exports Y-up with hierarchy, instances, UV, normals and vertex colors.",
             "Full affine placement uses RSrs inheritance and helper nodes for local shear.",
             "Phong approximates PBR. Metallic/roughness and ORM/occlusion use custom properties.",
+            "Shininess is written as both ShininessExponent and Shininess.",
             "Keep PNG sidecars with FBX. Vertex-color/normal-map rendering depends on importer.",
         ],
     )

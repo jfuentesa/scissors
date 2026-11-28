@@ -187,6 +187,22 @@ def test_fbx_binary_offsets_geometry_layers_and_world_hierarchy(app, shear):
     )
 
 
+def test_fbx_material_writes_modern_and_legacy_shininess(app):
+    scene = app.scenes.create()
+    cube = app.meshes.create_cube(scene_id=scene.id)
+    material = app.call("material.create", scene_id=scene.id, roughness=0.5)
+    app.call("material.assign", object_id=cube.id, material_id=material["id"])
+    result = app.export.fbx(scene.id)
+    objects = child(read_fbx(result.path), "Objects")["children"]
+    parameters = {
+        item["properties"][0]: item["properties"][4]
+        for item in child(child(objects, "Material")["children"], "Properties70")["children"]
+    }
+    expected = 2 / 0.5**4 - 2
+    assert parameters["ShininessExponent"] == pytest.approx(expected)
+    assert parameters["Shininess"] == pytest.approx(expected)
+
+
 @pytest.mark.parametrize("format", ["fbx", "dae", "usdz"])
 def test_exchange_textures_are_real_png_and_usdz_entries_are_aligned(app, format):
     scene = app.scenes.create()

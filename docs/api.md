@@ -1257,6 +1257,10 @@ OpenUSD or a new optional feature installation.
 | DAE | COLLADA 1.4.1 XML; geometry instances, hierarchy, affine matrices, normals, UV and RGBA | Phong approximation; base/emission textures; other PBR images retained through SCISSORS extras |
 | USDZ | USDA root layer plus PNG images; uncompressed ZIP with each payload aligned to 64 bytes | USD Preview Surface with base/normal/metallic/roughness/emissive/occlusion maps, alpha and double-sided flags |
 
+FBX materials write shininess twice: `ShininessExponent` for modern readers and
+`Shininess` for older ones, with the same value. This matches the property pair that
+the Autodesk FBX SDK writes.
+
 Static FBX exports use right-handed Y-up coordinates. Scene `(x, y, z)` becomes
 FBX `(x, z, -y)`. The writer converts mesh vertices, normals and local node transforms
 to that basis. DAE and USDZ retain scene Z-up coordinates. Static FBX declares centimeters
